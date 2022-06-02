@@ -1,0 +1,72 @@
+#!/bin/sh
+# /etc/init.d/ws-freeling
+
+# copiar este script a /etc/init.d
+# verificar que tenga permisos de ejecución
+# udate-rc.d servicio-freeling defaults
+# service servicio-freeling start
+# service servicio-freeling status
+# service servicio-freeling stop
+
+# ojo el servicio supone que en esta ruta estan las configuraciones:
+# /var/www/html/servicio-freeling/analyzer.cfg
+# revisar que los puertos coincidan con los que emplea el php:
+# en las lineas:
+#$PORTS = array(
+#  "tagged_es" => "9999",
+#  "tagged_en" => "9995",
+#  "tagged_fr" => "9994",
+#  "parsed_es" => "9998",
+##  "parsed_en" => "9993",
+#  "parsed_fr" => "9992",
+#  "dep_es" => "9997",
+#  "dep_en" => "9996",
+#  "dep_fr" => "9991"
+#);
+
+#Set –e is used within the Bash to stop execution instantly as a query exits while having a non-zero status.
+#This function is also used when you need to know the error location in the running code.
+
+set -e
+
+PATH=/usr/bin:/usr/sbin:/bin:/sbin:/usr/local/bin
+COMMAND=/usr/bin/analyzer
+CONFIG_ANALYZER=/var/www/html/servicio-freeling/
+. /lib/lsb/init-functions
+if [ -f /etc/defaults/rcS ]; then
+    . /etc/defaults/rcS
+fi
+
+case "$1" in
+  start)
+
+    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9999 --outlv tagged -f /var/www/html/servicio-freeling/analyzer.cfg &
+    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9995 --outlv tagged -f /var/www/html/servicio-freeling/analyzer_en.cfg &
+    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9994 --outlv tagged -f /var/www/html/servicio-freeling/analyzer_fr.cfg &
+
+    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9998 --outlv parsed -f /var/www/html/servicio-freeling/analyzer.cfg &
+    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9993 --outlv parsed -f /var/www/html/servicio-freeling/analyzer_en.cfg &
+    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9992 --outlv parsed -f /var/www/html/servicio-freeling/analyzer_fr.cfg &
+
+    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9997 --outlv dep -f /var/www/html/servicio-freeling/analyzer.cfg &
+    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9996 --outlv dep -f /var/www/html/servicio-freeling/analyzer_en.cfg &
+    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9991 --outlv dep -f /var/www/html/servicio-freeling/analyzer_fr.cfg &
+  ;;
+
+  stop)
+
+    kill `ps ax|egrep "analyze"|grep -v grep|awk '{print $1}'`
+  ;;
+
+  status)
+
+    ps ax | grep analyzer
+
+  ;;
+  *)
+    log_success_msg "Usage: /etc/init.d/servicio-freeling {start|stop|status}"
+    exit 1
+    ;;
+esac
+
+exit 0
