@@ -5,9 +5,16 @@ Sistema de consulta via web de Freeling
 1. Instalar free-ling
 
 ``` shell
-
 sudo apt-get install libboost-regex-dev libicu-dev zlib1g-dev libboost-dev
 sudo apt-get install libboost-system-dev libboost-program-options-dev libboost-thread-dev
+```
+Obtener el paquete oficial de FreeLing 4.2 para Ubuntu Focal de la página oficial:
+``` shell
+wget https://github.com/TALP-UPC/FreeLing/releases/download/4.2/freeling-4.2-focal-amd64.deb
+wget https://github.com/TALP-UPC/FreeLing/releases/download/4.2/freeling-langs-4.2.deb
+```
+
+``` shell
 sudo dpkg -i freeling-4.2-focal-amd64.deb
 sudo dpkg -i freeling-langs-4.2.deb
 ```
@@ -15,7 +22,7 @@ sudo dpkg -i freeling-langs-4.2.deb
 2. instalar PHP, la que se instaló fue php7.4
 
 ```
-sudo apt install php
+sudo apt install -y php7.4
 ```
 
 3. verificar que esté corriendo el servicio de apache y si no instalrlo o levantarlo
@@ -41,7 +48,7 @@ Successfully installed langid-1.1.6 numpy-1.20.3
 
    http://mi.servidor.org/servicio-freeling
    
-8. descargar en ese dierctorio el git
+8. descargar en ese directorio el git
 9. usar el script start.sh para arrancar los demonios de freeling, tomar en cuenta que puede ser necesario:
 
 Editar start.sh de ser necesario para que el COMMAND sea la ruta del comando del analizador (analyzer)
