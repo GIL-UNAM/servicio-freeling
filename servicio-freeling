@@ -1,70 +1,99 @@
 #!/bin/sh
-# /etc/init.d/ws-freeling
-
-# copiar este script a /etc/init.d
-# verificar que tenga permisos de ejecución
-# udate-rc.d servicio-freeling defaults
-# service servicio-freeling start
-# service servicio-freeling status
-# service servicio-freeling stop
-
-# ojo el servicio supone que en esta ruta estan las configuraciones:
-# /var/www/html/servicio-freeling/analyzer.cfg
-# revisar que los puertos coincidan con los que emplea el php:
-# en las lineas:
-#$PORTS = array(
-#  "tagged_es" => "9999",
-#  "tagged_en" => "9995",
-#  "tagged_fr" => "9994",
-#  "parsed_es" => "9998",
-##  "parsed_en" => "9993",
-#  "parsed_fr" => "9992",
-#  "dep_es" => "9997",
-#  "dep_en" => "9996",
-#  "dep_fr" => "9991"
-#);
-
-#Set –e is used within the Bash to stop execution instantly as a query exits while having a non-zero status.
-#This function is also used when you need to know the error location in the running code.
+### BEGIN INIT INFO
+# Provides:          servicio-freeling
+# Required-Start:    $remote_fs $syslog $network
+# Required-Stop:     $remote_fs $syslog $network
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: FreeLing analyzer multi-instances
+# Description:       Start multiple FreeLing analyzer servers on fixed ports
+### END INIT INFO
 
 set -e
 
-PATH=/usr/bin:/usr/sbin:/bin:/sbin:/usr/local/bin
-COMMAND=/usr/bin/analyzer
-CONFIG_ANALYZER=/var/www/html/servicio-freeling/
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+DAEMON=/usr/bin/analyzer
+NAME=servicio-freeling
+DESC="FreeLing analyzer cluster"
+RUN_AS=freeling
+
+FREELINGSHARE=/usr/share/freeling
+CFG_BASE=/var/www/html/servicio-freeling
+RUNDIR=/run/$NAME
+
 . /lib/lsb/init-functions
-if [ -f /etc/defaults/rcS ]; then
-    . /etc/defaults/rcS
-fi
+
+INSTANCES="
+9999 tagged ${CFG_BASE}/analyzer.cfg
+9995 tagged ${CFG_BASE}/analyzer_en.cfg
+9994 tagged ${CFG_BASE}/analyzer_fr.cfg
+9998 parsed ${CFG_BASE}/analyzer.cfg
+9993 parsed ${CFG_BASE}/analyzer_en.cfg
+9992 parsed ${CFG_BASE}/analyzer_fr.cfg
+9997 dep    ${CFG_BASE}/analyzer.cfg
+9996 dep    ${CFG_BASE}/analyzer_en.cfg
+9991 dep    ${CFG_BASE}/analyzer_fr.cfg
+"
+
+do_start() {
+    mkdir -p "$RUNDIR"
+    chown $RUN_AS:$RUN_AS "$RUNDIR" || true
+
+    echo "$INSTANCES" | while read -r PORT OUTLV CFG; do
+        [ -z "$PORT" ] && continue
+        PIDFILE="$RUNDIR/${PORT}.pid"
+        start-stop-daemon --start --quiet --background \
+            --make-pidfile --pidfile "$PIDFILE" \
+            --chuid $RUN_AS \
+            --exec /usr/bin/env -- FREELINGSHARE="$FREELINGSHARE" "$DAEMON" \
+            --server -p "$PORT" --outlv "$OUTLV" -f "$CFG"
+        echo "Started analyzer on port $PORT ($OUTLV)"
+    done
+}
+
+do_stop() {
+    RET=0
+    for pidf in "$RUNDIR"/*.pid; do
+        [ -e "$pidf" ] || continue
+        start-stop-daemon --stop --retry=TERM/5/KILL/5 --pidfile "$pidf" || RET=$?
+        rm -f "$pidf"
+    done
+    return $RET
+}
+
+do_status() {
+    for pidf in "$RUNDIR"/*.pid; do
+        [ -e "$pidf" ] || continue
+        PORT=$(basename "$pidf" .pid)
+        if start-stop-daemon --status --pidfile "$pidf" >/dev/null 2>&1; then
+            echo "analyzer port $PORT: running (pid $(cat "$pidf"))"
+        else
+            echo "analyzer port $PORT: not running"
+        fi
+    done
+}
+
 
 case "$1" in
   start)
-
-    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9999 --outlv tagged -f /var/www/html/servicio-freeling/analyzer.cfg &
-    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9995 --outlv tagged -f /var/www/html/servicio-freeling/analyzer_en.cfg &
-    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9994 --outlv tagged -f /var/www/html/servicio-freeling/analyzer_fr.cfg &
-
-    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9998 --outlv parsed -f /var/www/html/servicio-freeling/analyzer.cfg &
-    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9993 --outlv parsed -f /var/www/html/servicio-freeling/analyzer_en.cfg &
-    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9992 --outlv parsed -f /var/www/html/servicio-freeling/analyzer_fr.cfg &
-
-    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9997 --outlv dep -f /var/www/html/servicio-freeling/analyzer.cfg &
-    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9996 --outlv dep -f /var/www/html/servicio-freeling/analyzer_en.cfg &
-    FREELINGSHARE=/usr/share/freeling $COMMAND --server -p 9991 --outlv dep -f /var/www/html/servicio-freeling/analyzer_fr.cfg &
-  ;;
-
+    log_daemon_msg "Starting $DESC" "$NAME"
+    do_start
+    log_end_msg $?
+    ;;
   stop)
-
-    kill `ps ax|egrep "analyze"|grep -v grep|awk '{print $1}'`
-  ;;
-
+    log_daemon_msg "Stopping $DESC" "$NAME"
+    do_stop
+    log_end_msg $?
+    ;;
+  restart|force-reload)
+    $0 stop || true
+    $0 start
+    ;;
   status)
-
-    ps ax | grep analyzer
-
-  ;;
+    do_status
+    ;;
   *)
-    log_success_msg "Usage: /etc/init.d/servicio-freeling {start|stop|status}"
+    echo "Usage: /etc/init.d/$NAME {start|stop|restart|status}"
     exit 1
     ;;
 esac
