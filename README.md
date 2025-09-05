@@ -59,6 +59,30 @@ Ejecutar start.sh para iniciar todos los procesos servidores de freeling
 source start.sh
 ```
 
+10. **Servicio con freeling**
+    
+Para dejar un servicio que levante freeling aun despues de reiniciar el servidor
+crea un usuario para aislar posibles fallas de seguridad
+
+``` shell
+sudo useradd --system --no-create-home --shell /usr/sbin/nologin freeling
+```
+
+copia el archivo que define el servicio a init.d asegurate que tenga derechos de ejecución y registralo en systemd
+``` shell
+sudo cp servicio-freeling /etc/init.d/.
+sudo chmod +x /etc/init.d/servicio-freeling
+sudo update-rc.d servicio-freeling defaults
+```
+prueba su funcionamiento:
+
+``` shell
+sudo service servicio-freeling stop
+sudo service servicio-freeling start
+sudo service servicio-freeling status
+```
+
+
 # problemas encontrados y cómo los solucioné:
 
 Al instalar freeling
