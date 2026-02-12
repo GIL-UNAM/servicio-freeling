@@ -1,0 +1,4 @@
+flask>=2.0.0
+spacy>=3.0.0
+langid>=1.1.6
+gunicorn>=20.0.0

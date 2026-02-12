@@ -1,0 +1,30 @@
+services:
+  freeling-tagged:
+    image: lcriadof/freeling:4.2
+    container_name: freeling-tagged
+    ports:
+      - "9999:9999"
+    volumes:
+      - ./analyzer.cfg:/usr/share/freeling/config/es.cfg:ro
+    command: analyzer --server -p 9999 --outlv tagged -f /usr/share/freeling/config/es.cfg
+    restart: unless-stopped
+
+  freeling-parsed:
+    image: lcriadof/freeling:4.2
+    container_name: freeling-parsed
+    ports:
+      - "9998:9998"
+    volumes:
+      - ./analyzer.cfg:/usr/share/freeling/config/es.cfg:ro
+    command: analyzer --server -p 9998 --outlv parsed -f /usr/share/freeling/config/es.cfg
+    restart: unless-stopped
+
+  freeling-dep:
+    image: lcriadof/freeling:4.2
+    container_name: freeling-dep
+    ports:
+      - "9997:9997"
+    volumes:
+      - ./analyzer.cfg:/usr/share/freeling/config/es.cfg:ro
+    command: analyzer --server -p 9997 --outlv dep -f /usr/share/freeling/config/es.cfg
+    restart: unless-stopped
