@@ -1,0 +1,17 @@
+__pycache__
+*.pyc
+.git
+*.pdf
+*.diff
+*.md
+*.php
+*.css
+*.js
+*.ico
+deploy_production.sh
+install.sh
+start.sh
+servicio-freeling
+servicio-freeling.conf
+servicio-freeling.service
+test_v2.py
