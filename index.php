@@ -1,4 +1,9 @@
-<?php $endpoint = "http://www.corpus.unam.mx/servicio-freeling/analyze.php"; ?>
+<?php
+  $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+  $endpoint = $scheme . "://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/analyze.php";
+  $endpoint = preg_replace('#/+#', '/', $endpoint);
+  $endpoint = preg_replace('#^(https?:)/#', '$1//', $endpoint);
+?>
 <!DOCTYPE html>
 <html>
 
@@ -58,7 +63,7 @@
     <h2>Usar online</h2>
     <fieldset>
     <div class="form-group">
-    <form action="analyze.php" method="post"enctype="multipart/form-data">
+    <form action="<?php echo $endpoint ?>" method="post" enctype="multipart/form-data">
       <label for="file">Archivo:</label>
       <span style="color:#377BB5"><strong><small>Debe ser en formato .txt (texto plano) y codificado en utf-8</small></strong></span>
       <input type="file" name="file" id="file" class="form-control" required="required"><br/>
