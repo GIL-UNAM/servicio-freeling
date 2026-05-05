@@ -1,6 +1,7 @@
 <?php
   $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-  $endpoint = $scheme . "://" . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']) . "/analyze.php";
+  $host = getenv('FREELING_ENDPOINT_HOST') ?: $_SERVER['HTTP_HOST'];
+  $endpoint = $scheme . "://" . $host . dirname($_SERVER['PHP_SELF']) . "/analyze.php";
   $endpoint = preg_replace('#/+#', '/', $endpoint);
   $endpoint = preg_replace('#^(https?:)/#', '$1//', $endpoint);
 ?>
