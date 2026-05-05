@@ -10,6 +10,7 @@ A Flask-based web service for POS tagging, parsing, and dependency analysis.
 
 import os
 import tempfile
+from datetime import datetime
 from flask import Flask, request, jsonify, render_template, Response
 
 import langid
@@ -40,8 +41,16 @@ def http_error(status_code: int, message: str):
 @app.route('/')
 def index():
     """Render the main web interface."""
+    host_override = os.environ.get('FREELING_ENDPOINT_HOST')
+    if host_override:
+        scheme = 'https' if request.is_secure else 'http'
+        endpoint = f"{scheme}://{host_override}{request.script_root}/analyze"
+    else:
+        endpoint = request.url_root + 'analyze'
+
     return render_template('index.html',
-                           endpoint=request.url_root + 'analyze',
+                           endpoint=endpoint,
+                           now=datetime.now(),
                            languages=SUPPORTED_LANGUAGES,
                            spacy_languages=list(SPACY_MODELS.keys()))
 
