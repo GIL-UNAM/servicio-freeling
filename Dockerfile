@@ -14,9 +14,9 @@ ENV LANG=en_US.UTF-8
 ENV LC_ALL=en_US.UTF-8
 
 # System dependencies (including libboost needed by FreeLing)
-# + deadsnakes PPA for Python 3.11
+# + deadsnakes PPA for Python 3.9 (key fetched over HTTPS to avoid HKP port 11371 timeouts)
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        wget ca-certificates software-properties-common \
+        wget ca-certificates gnupg \
         build-essential \
         libboost-filesystem1.71.0 \
         libboost-program-options1.71.0 \
@@ -25,7 +25,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libboost-thread1.71.0 \
         libicu66 \
         libfoma0 \
-    && add-apt-repository -y ppa:deadsnakes/ppa \
+    && wget -qO- 'https://keyserver.ubuntu.com/pks/lookup?op=get&search=0xF23C5A6CF475977595C89F51BA6932366A755776' \
+        | gpg --dearmor -o /usr/share/keyrings/deadsnakes.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/deadsnakes.gpg] http://ppa.launchpad.net/deadsnakes/ppa/ubuntu focal main" \
+        > /etc/apt/sources.list.d/deadsnakes.list \
     && apt-get update && apt-get install -y --no-install-recommends \
         python3.9 python3.9-venv python3.9-dev \
     && rm -rf /var/lib/apt/lists/*
