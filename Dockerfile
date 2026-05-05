@@ -19,6 +19,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         wget ca-certificates gnupg \
         build-essential \
         libboost-filesystem1.71.0 \
+        libboost-iostreams1.71.0 \
         libboost-program-options1.71.0 \
         libboost-regex1.71.0 \
         libboost-system1.71.0 \
@@ -33,13 +34,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         python3.9 python3.9-venv python3.9-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install FreeLing 4.2 from GitHub releases
+# Install FreeLing 4.2 from GitHub releases (deps already installed above)
 RUN wget -q https://github.com/TALP-UPC/FreeLing/releases/download/4.2/freeling-4.2-focal-amd64.deb \
     && wget -q https://github.com/TALP-UPC/FreeLing/releases/download/4.2/freeling-langs-4.2.deb \
-    && dpkg -i freeling-4.2-focal-amd64.deb freeling-langs-4.2.deb || true \
-    && apt-get update && apt-get install -y -f --no-install-recommends \
-    && rm -f freeling-4.2-focal-amd64.deb freeling-langs-4.2.deb \
-    && rm -rf /var/lib/apt/lists/*
+    && dpkg -i freeling-4.2-focal-amd64.deb freeling-langs-4.2.deb \
+    && rm -f freeling-4.2-focal-amd64.deb freeling-langs-4.2.deb
 
 # Python virtualenv with 3.11
 RUN python3.9 -m venv /opt/venv
