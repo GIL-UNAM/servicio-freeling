@@ -11,6 +11,7 @@ import json
 from unittest.mock import patch, MagicMock
 
 from app import app
+from analyzers.spacy_analyzer import SpacyAnalyzer
 
 FRENCH_TEXT = (
     "Le président de la République a prononcé un discours "
@@ -27,6 +28,30 @@ def section(title):
     print(f"\n{'=' * 60}")
     print(f"  {title}")
     print(f"{'=' * 60}")
+
+
+def test_spacy_tagged_preserves_doc_sentence_ids():
+    """The token-level contract must retain the boundaries from Doc.sents."""
+
+    class Token:
+        def __init__(self, text):
+            self.text = text
+            self.lemma_ = text.lower()
+            self.tag_ = "TEST"
+
+    class Nlp:
+        def __call__(self, text):
+            return type("Doc", (), {
+                "sents": [[Token("One"), Token(".")], [Token("Two"), Token("!")]],
+            })()
+
+    analyzer = SpacyAnalyzer("en", "unused-for-test")
+    analyzer._nlp = Nlp()
+
+    data = analyzer.tagged("One. Two!")
+
+    assert [[token["sentence"] for token in sentence] for sentence in data] == [[0, 0], [1, 1]]
+    print("  ✓ spaCy tagged tokens retain their Doc.sents indexes")
 
 
 # ------------------------------------------------------------------ #
@@ -55,10 +80,13 @@ def test_french_tagged_json():
 
     # Basic structural checks
     assert isinstance(data, list) and len(data) > 0, "Should return at least one sentence"
-    for sent in data:
+    for sentence_index, sent in enumerate(data):
         for tok in sent:
-            assert set(tok.keys()) == {"token", "lemma", "tag", "prob"}, (
+            assert set(tok.keys()) == {"token", "lemma", "tag", "prob", "sentence"}, (
                 f"Token keys mismatch: {tok.keys()}"
+            )
+            assert tok["sentence"] == sentence_index, (
+                "spaCy sentence id must match the enclosing Doc.sents group"
             )
 
     print("\n  ✓ PASSED")
@@ -257,6 +285,7 @@ def test_spanish_parsed_calls_analyzer_client():
 
 if __name__ == "__main__":
     tests = [
+        test_spacy_tagged_preserves_doc_sentence_ids,
         test_french_tagged_json,
         test_french_dep_json,
         test_french_tagged_plain,

@@ -6,12 +6,13 @@ class BaseAnalyzer(ABC):
     """Base class for text analyzers."""
 
     @abstractmethod
-    def tagged(self, text: str) -> List[List[Dict[str, str]]]:
+    def tagged(self, text: str) -> List[List[Dict[str, Any]]]:
         """
         Perform POS tagging on the text.
 
         Returns a list of sentences, where each sentence is a list of tokens.
-        Each token is a dict with keys: token, lemma, tag, prob
+        Each token is a dict with keys: token, lemma, tag, prob, and an
+        optional sentence index when supplied by the analyzer.
         """
         pass
 

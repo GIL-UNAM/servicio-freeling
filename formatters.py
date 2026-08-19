@@ -2,7 +2,7 @@ import json
 from typing import List, Dict, Any
 
 
-def format_tagged_html(data: List[List[Dict[str, str]]]) -> str:
+def format_tagged_html(data: List[List[Dict[str, Any]]]) -> str:
     """Format tagged output as HTML tables."""
     html = ""
     for sentence in data:

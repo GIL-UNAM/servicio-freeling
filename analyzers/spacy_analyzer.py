@@ -18,19 +18,22 @@ class SpacyAnalyzer(BaseAnalyzer):
             self._nlp = spacy.load(self.model_name)
         return self._nlp
 
-    def tagged(self, text: str) -> List[List[Dict[str, str]]]:
+    def tagged(self, text: str) -> List[List[Dict[str, Any]]]:
         """Perform POS tagging and return structured data matching FreeLing format."""
         doc = self.nlp(text)
         data = []
 
-        for sent in doc.sents:
+        for sentence_index, sent in enumerate(doc.sents):
             sentence = []
             for token in sent:
                 sentence.append({
                     "token": token.text,
                     "lemma": token.lemma_,
                     "tag": token.tag_,
-                    "prob": "1.0"  # spaCy doesn't provide tag probability the same way
+                    "prob": "1.0",  # spaCy doesn't provide tag probability the same way
+                    # Keep Doc.sents' real boundary available to clients that
+                    # flatten this response into durable POS records.
+                    "sentence": sentence_index,
                 })
             data.append(sentence)
 
